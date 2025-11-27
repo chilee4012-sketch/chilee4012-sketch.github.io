@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Newsly — Đọc báo</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724; /* dark navy */
+      --card:#0b1220;
+      --muted:#98a3b3;
+      --accent:#ff6b6b;
+      --glass: rgba(255,255,255,0.03);
+      --radius:16px;
+      --gap:18px;
+      --maxw:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#071021 0%, #071b2a 100%);
+      color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      padding:32px;display:flex;justify-content:center;align-items:flex-start;
+    }
+    .wrap{width:100%;max-width:var(--maxw)}
+
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+    .brand{display:flex;gap:14px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ffa94d);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071021}
+    .site-title{line-height:1}
+    .site-title h1{font-size:20px;margin:0}
+    .site-title p{margin:0;color:var(--muted);font-size:13px}
+
+    .controls{display:flex;gap:12px;align-items:center}
+    .search{background:var(--glass);padding:8px 12px;border-radius:12px;display:flex;align-items:center;gap:8px}
+    .search input{background:transparent;border:0;color:inherit;outline:none;width:220px}
+    .toggle{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:6px 10px;border-radius:999px;cursor:pointer}
+
+    main{display:grid;grid-template-columns: 1fr 320px;gap:var(--gap);align-items:start}
+
+    /* top featured */
+    .featured{display:grid;grid-template-columns:1fr;gap:var(--gap);margin-bottom:12px}
+    .hero{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent), url('https://picsum.photos/1200/600?blur=2') center/cover no-repeat; border-radius:var(--radius);padding:26px;min-height:320px;display:flex;flex-direction:column;justify-content:flex-end}
+    .hero .kicker{background:rgba(0,0,0,0.32);display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
+    .hero h2{margin:10px 0 6px;font-size:28px}
+    .hero p{margin:0;color:var(--muted)}
+
+    /* article list */
+    .feed{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--gap)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+    .thumb{width:140px;height:92px;border-radius:10px;flex-shrink:0;background:#122433;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .meta{flex:1}
+    .meta .title{font-weight:700;margin:0 0 6px}
+    .meta .desc{margin:0;color:var(--muted);font-size:13px}
+    .meta .byline{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* sidebar */
+    aside{position:relative}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:16px;border-radius:14px;margin-bottom:12px}
+    .trending li{list-style:none;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    .trending li:last-child{border-bottom:0}
+    .small{font-size:13px;color:var(--muted)}
+
+    footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* responsive */
+    @media (max-width:980px){main{grid-template-columns:1fr} .feed{grid-template-columns:1fr} .thumb{width:120px;height:80px}}
+    @media (max-width:560px){body{padding:18px} .logo{width:44px;height:44px} .site-title h1{font-size:18px} .search input{width:120px}}
+
+    /* article modal */
+    .reader{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:28px;z-index:60}
+    .reader.show{display:flex}
+    .reader .sheet{width:min(900px,96%);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#051026,#07143a);border-radius:14px;padding:22px}
+    .reader .sheet h2{margin-top:0}
+    .close-btn{position:absolute;right:22px;top:18px;background:transparent;border:0;color:var(--muted);cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">N</div>
+        <div class="site-title">
+          <h1>Newsly</h1>
+          <p>Tin tức chọn lọc — đọc nhanh</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.5"/></svg>
+          <input id="q" placeholder="Tìm chủ đề, từ khóa...">
+        </div>
+        <button class="toggle" id="themeBtn">Dark</button>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <div class="featured">
+          <div class="hero" id="hero">
+            <span class="kicker">Nổi bật</span>
+            <h2 id="heroTitle">Tiêu đề bài nổi bật sẽ hiện ở đây</h2>
+            <p id="heroExcerpt">Tóm tắt ngắn gọn của bài viết nổi bật — vài câu để kích thích người đọc.</p>
+          </div>
+
+          <div class="feed" id="feed">
+            <!-- article cards injected by JS -->
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h3 style="margin:0 0 8px">Xu hướng</h3>
+          <ul class="trending" id="trending">
+            <!-- trending list -->
+          </ul>
+        </div>
+
+        <div class="panel">
+          <h4 style="margin:0 0 8px">Newsletter</h4>
+          <p class="small">Đăng ký nhận bản tin hằng ngày với các tin nổi bật.</p>
+          <form id="nl" style="display:flex;gap:8px;margin-top:10px">
+            <input placeholder="Email của bạn" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit">
+            <button style="padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071021">Đăng ký</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h4 style="margin:0 0 8px">Về chúng tôi</h4>
+          <p class="small">Newsly tập hợp tin tức nhanh, nguồn đáng tin cậy, giao diện thân thiện — đọc mọi lúc mọi nơi.</p>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      © <span id="year"></span> Newsly • Giao diện demo — chỉnh sửa tùy ý
+    </footer>
+  </div>
+
+  <!-- reader modal -->
+  <div class="reader" id="reader">
+    <div class="sheet" id="sheet">
+      <button class="close-btn" id="closeReader">✕</button>
+      <h2 id="artTitle">Tiêu đề</h2>
+      <p class="small" id="artBy">Tác giả • Ngày</p>
+      <img id="artImg" style="width:100%;border-radius:10px;margin:14px 0;max-height:360px;object-fit:cover" src="">
+      <div id="artBody" style="line-height:1.7;color:#dbe9ff"></div>
+    </div>
+  </div>
+
+  <script>
+    // sample data (replace with real API if available)
+    const articles = [
+      {id:1,title:'Chính sách mới thay đổi kinh tế địa phương',excerpt:'Chính sách A vừa được ban hành và sẽ ảnh hưởng trực tiếp đến ngành X...',img:'https://picsum.photos/seed/a/800/600',author:'Minh H.',date:'Nov 12, 2025',body:'<p>Chi tiết bài viết — mô tả sâu hơn về chính sách, phản ứng của các bên liên quan và phân tích chuyên gia.</p>'},
+      {id:2,title:'Công nghệ AI: startup Việt ghi điểm',excerpt:'Một startup địa phương vừa gọi vốn thành công vòng A, tập trung vào AI cho nông nghiệp...',img:'https://picsum.photos/seed/b/800/600',author:'Lan P.',date:'Nov 11, 2025',body:'<p>Bài phân tích về công nghệ và tác động tới người nông dân.</p>'},
+      {id:3,title:'Mẹo sức khỏe: ngủ đủ không phải là đủ',excerpt:'Chuyên gia chia sẻ bí quyết để cải thiện chất lượng giấc ngủ...',img:'https://picsum.photos/seed/c/800/600',author:'Hà T.',date:'Nov 10, 2025',body:'<p>Lời khuyên thực tế và thông tin khoa học.</p>'},
+      {id:4,title:'Văn hóa: lễ hội địa phương thu hút du khách',excerpt:'Lễ hội văn hóa X đã trở lại với nhiều hoạt động hấp dẫn...',img:'https://picsum.photos/seed/d/800/600',author:'Quốc B.',date:'Nov 09, 2025',body:'<p>Một buổi tường thuật trực tiếp từ lễ hội.</p>'},
+      {id:5,title:'Thị trường BĐS: có nên đầu tư?',excerpt:'Các chuyên gia bàn luận về chu kỳ bất động sản và rủi ro hiện tại...',img:'https://picsum.photos/seed/e/800/600',author:'An K.',date:'Nov 08, 2025',body:'<p>Chiến lược đầu tư thận trọng và dữ liệu thị trường.</p>'}
+    ];
+
+    // utils
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+
+    // render hero and feed
+    function render(){
+      const hero = articles[0];
+      $('#heroTitle').textContent = hero.title;
+      $('#heroExcerpt').textContent = hero.excerpt;
+      $('#hero').style.backgroundImage = `linear-gradient(180deg, rgba(255,255,255,0.02), transparent), url(${hero.img})`;
+
+      const feed = $('#feed'); feed.innerHTML = '';
+      for(let i=1;i<articles.length;i++){
+        const a = articles[i];
+        const card = document.createElement('article'); card.className='card';
+        card.innerHTML = `
+          <div class="thumb"><img loading="lazy" src="${a.img}" alt=""></div>
+          <div class="meta">
+            <h3 class="title">${a.title}</h3>
+            <p class="desc">${a.excerpt}</p>
+            <div class="byline small">${a.author} • ${a.date}</div>
+          </div>
+        `;
+        card.addEventListener('click',()=>openArticle(a));
+        feed.appendChild(card);
+      }
+
+      // trending
+      const tr = $('#trending'); tr.innerHTML='';
+      articles.slice(0,5).forEach((t,idx)=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>#${idx+1}</strong> ${t.title}`;
+        li.style.cursor='pointer';
+        li.addEventListener('click',()=>openArticle(t));
+        tr.appendChild(li);
+      });
+
+      $('#year').textContent = new Date().getFullYear();
+    }
+
+    // open article modal
+    function openArticle(a){
+      $('#artTitle').textContent = a.title;
+      $('#artBy').textContent = `${a.author} • ${a.date}`;
+      $('#artImg').src = a.img;
+      $('#artBody').innerHTML = a.body + '<p style="margin-top:12px;color:var(--muted)">— Hết —</p>';
+      $('#reader').classList.add('show');
+      document.body.style.overflow='hidden';
+    }
+    $('#closeReader').addEventListener('click',()=>{ $('#reader').classList.remove('show'); document.body.style.overflow=''; });
+    $('#reader').addEventListener('click',(e)=>{ if(e.target===document.getElementById('reader')){ $('#reader').classList.remove('show'); document.body.style.overflow=''; } });
+
+    // search
+    $('#q').addEventListener('input',e=>{
+      const v = e.target.value.toLowerCase().trim();
+      const filtered = articles.filter(a=> a.title.toLowerCase().includes(v) || a.excerpt.toLowerCase().includes(v));
+      // show filtered in feed
+      const feed = $('#feed'); feed.innerHTML='';
+      filtered.slice(1).forEach(a=>{
+        const card = document.createElement('article'); card.className='card';
+        card.innerHTML = `\n          <div class="thumb"><img loading="lazy" src="${a.img}" alt=""></div>\n          <div class="meta">\n            <h3 class="title">${a.title}</h3>\n            <p class="desc">${a.excerpt}</p>\n            <div class="byline small">${a.author} • ${a.date}</div>\n          </div>\n        `;
+        card.addEventListener('click',()=>openArticle(a));
+        feed.appendChild(card);
+      });
+
+      if(v===''){ render(); }
+    });
+
+    // theme toggle (simple example)
+    const themeBtn = $('#themeBtn');
+    let dark = true;
+    themeBtn.addEventListener('click',()=>{
+      dark = !dark;
+      if(dark){ document.documentElement.style.setProperty('--bg','#0f1724'); document.body.style.background='linear-gradient(180deg,#071021 0%, #071b2a 100%)'; themeBtn.textContent='Dark'; }
+      else{ document.documentElement.style.setProperty('--bg','#f5f7fb'); document.body.style.background='linear-gradient(180deg,#f8fafc,#eef2ff)'; themeBtn.textContent='Light'; }
+    });
+
+    // init
+    render();
+  </script>
+</body>
+</html>
